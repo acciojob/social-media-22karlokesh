@@ -12,123 +12,136 @@
 
 // export default App
 
-import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route, useNavigate, useParams } from "react-router-dom";
 
+
+import React, { useState } from "react";
+import "./../styles/App.css";
 
 const App = () => {
+  const [page, setPage] = useState(window.location.pathname);
   const [posts, setPosts] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [users] = useState(["User1", "User2", "User3"]);
-  const [selectedUserPosts, setSelectedUserPosts] = useState([]);
-  const [title, setTitle] = useState("");
-  const [author, setAuthor] = useState("");
-  const [content, setContent] = useState("");
-  const [editingIndex, setEditingIndex] = useState(-1);
-  const [editTitle, setEditTitle] = useState("");
-  const [editContent, setEditContent] = useState("");
-  const [page, setPage] = useState("/");
+  const [form, setForm] = useState({ title: "", author: "", content: "" });
+  const [editingPost, setEditingPost] = useState(null);
 
-  const addPost = () => {
-    const newPost = { title, author, content, reactions: [0,0,0,0] };
+  const users = ["Alice", "Bob", "Charlie"];
+
+  const navigate = (path) => {
+    window.history.pushState({}, "", path);
+    setPage(path);
+  };
+
+  const addPost = (e) => {
+    e.preventDefault();
+    const newPost = { ...form, id: Date.now(), reactions: [0, 0, 0, 0, 0] };
     setPosts([newPost, ...posts]);
-    setTitle(""); setAuthor(""); setContent("");
+    setForm({ title: "", author: "", content: "" });
+    navigate("/");
   };
 
-  const editPost = (index) => {
-    setEditingIndex(index);
-    setEditTitle(posts[index].title);
-    setEditContent(posts[index].content);
-  };
-
-  const saveEdit = () => {
-    const updated = [...posts];
-    updated[editingIndex].title = editTitle;
-    updated[editingIndex].content = editContent;
-    setPosts(updated);
-    setEditingIndex(-1);
+  const editPost = () => {
+    setPosts(posts.map(p => p.id === editingPost.id ? editingPost : p));
+    setEditingPost(null);
+    navigate("/");
   };
 
   return (
     <div className="App">
       <h1>GenZ</h1>
       <nav>
-        <a href="/" onClick={(e)=>{e.preventDefault();setPage("/")}}>Posts</a> | 
-        <a href="/users" onClick={(e)=>{e.preventDefault();setPage("/users")}}>Users</a> | 
-        <a href="/notifications" onClick={(e)=>{e.preventDefault();setPage("/notifications")}}>Notifications</a>
+        <a href="/" onClick={(e) => { e.preventDefault(); navigate("/"); }}>Posts</a>
+        <a href="/users" onClick={(e) => { e.preventDefault(); navigate("/users"); }}>Users</a>
+        <a href="/notifications" onClick={(e) => { e.preventDefault(); navigate("/notifications"); }}>Notifications</a>
       </nav>
 
       {page === "/" && (
         <>
-          <div>
-            <input id="postTitle" value={title} onChange={e=>setTitle(e.target.value)} placeholder="Post Title"/>
-            <select id="postAuthor" value={author} onChange={e=>setAuthor(e.target.value)}>
-              <option value="">Select Author</option>
-              {users.map((u,i)=><option key={i} value={u}>{u}</option>)}
+          <form onSubmit={addPost}>
+            <input id="postTitle" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Title" />
+            <select id="postAuthor" value={form.author} onChange={e => setForm({ ...form, author: e.target.value })}>
+              <option value="">Select author</option>
+              {users.map(u => <option key={u} value={u}>{u}</option>)}
             </select>
-            <textarea id="postContent" value={content} onChange={e=>setContent(e.target.value)} placeholder="Post Content"></textarea>
-            <button onClick={addPost}>Submit</button>
-          </div>
+            <textarea id="postContent" value={form.content} onChange={e => setForm({ ...form, content: e.target.value })} placeholder="Content"></textarea>
+            <button>Add Post</button>
+          </form>
+
           <div className="posts-list">
             <h2>Posts</h2>
-            {posts.map((post, i)=>(
-              <div key={i} className="post">
+            {posts.map((post, i) => (
+              <div className="post" key={post.id}>
                 <h3>{post.title}</h3>
                 <p>{post.content}</p>
+                <p><i>by {post.author}</i></p>
                 <div>
-                  {post.reactions.slice(0,4).map((r,idx)=>(
-                    <button key={idx} onClick={()=>{
-                      const updated = [...posts];
-                      updated[i].reactions[idx]++;
-                      setPosts(updated);
+                  {post.reactions.map((r, idx) => (
+                    <button key={idx} onClick={() => {
+                      if (idx === 4) return;
+                      setPosts(posts.map(p => p.id === post.id
+                        ? { ...p, reactions: p.reactions.map((v, i) => i === idx ? v + 1 : v) }
+                        : p
+                      ));
                     }}>{r}</button>
                   ))}
-                  <button>0</button>
                 </div>
-                <button className="button" onClick={()=>editPost(i)}>Edit</button>
+                <button className="button" onClick={() => { navigate(`/posts/${post.id}`); }}>View Post</button>
               </div>
             ))}
-            {editingIndex >= 0 && (
-              <div className="post">
-                <input id="postTitle" value={editTitle} onChange={e=>setEditTitle(e.target.value)} />
-                <textarea id="postContent" value={editContent} onChange={e=>setEditContent(e.target.value)} />
-                <button onClick={saveEdit}>Save</button>
-              </div>
-            )}
           </div>
         </>
       )}
 
+      {page.startsWith("/posts/") && editingPost == null && (
+        <>
+          {(() => {
+            const postId = parseInt(page.split("/")[2]);
+            const post = posts.find(p => p.id === postId);
+            return post ? (
+              <div className="post">
+                <h3>{post.title}</h3>
+                <p>{post.content}</p>
+                <button className="button" onClick={() => setEditingPost({ ...post })}>Edit</button>
+              </div>
+            ) : <p>Post not found</p>
+          })()}
+        </>
+      )}
+
+      {editingPost && (
+        <>
+          <input id="postTitle" value={editingPost.title} onChange={e => setEditingPost({ ...editingPost, title: e.target.value })} />
+          <textarea id="postContent" value={editingPost.content} onChange={e => setEditingPost({ ...editingPost, content: e.target.value })}></textarea>
+          <button onClick={editPost}>Save</button>
+        </>
+      )}
+
       {page === "/users" && (
-        <div>
-          <ul>
-            {users.map((u,i)=>(
-              <li key={i} onClick={()=>{
-                setSelectedUserPosts(posts.filter(p=>p.author===u));
-              }}>{u}</li>
-            ))}
-          </ul>
-          {selectedUserPosts.map((p,i)=>(
-            <div key={i} className="post">
-              <h3>{p.title}</h3>
-              <p>{p.content}</p>
-            </div>
+        <ul>
+          {users.map((u, i) => (
+            <li key={u}><a onClick={() => navigate(`/users/${i}`)}>{u}</a></li>
           ))}
+        </ul>
+      )}
+
+      {page.startsWith("/users/") && (
+        <div className="posts-list">
+          {posts.filter(p => users[parseInt(page.split("/")[2])] === p.author)
+            .map(p => (
+              <div className="post" key={p.id}>
+                <h3>{p.title}</h3>
+                <p>{p.content}</p>
+              </div>
+            ))}
         </div>
       )}
 
       {page === "/notifications" && (
-        <section className="notificationsList">
-          <button className="button" onClick={()=>{
-            setNotifications([
-              "New comment on your post",
-              "User2 liked your post"
-            ]);
-          }}>Refresh Notifications</button>
-          {notifications.map((n,i)=>(
-            <div key={i}>{n}</div>
-          ))}
-        </section>
+        <div>
+          <button className="button" onClick={() => setNotifications(["New message", "New follower", "Update available"])}>Refresh Notifications</button>
+          <section className="notificationsList">
+            {notifications.map((n, i) => <div key={i}>{n}</div>)}
+          </section>
+        </div>
       )}
     </div>
   );
