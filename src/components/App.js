@@ -14,7 +14,6 @@
 
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, useNavigate, useParams } from "react-router-dom";
-import "./styles/App.css";
 
 const App = () => {
   const [posts, setPosts] = useState([]);
@@ -114,10 +113,8 @@ const CreatePost = ({ posts, setPosts }) => {
 
 const PostDetails = ({ posts, setPosts }) => {
   const { postId } = useParams();
-  const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const post = posts[postId];
-
   const [title, setTitle] = useState(post.title);
   const [content, setContent] = useState(post.content);
 
@@ -185,4 +182,3 @@ const Notifications = ({ notifications, setNotifications }) => {
     </section>
   )
 }
-
