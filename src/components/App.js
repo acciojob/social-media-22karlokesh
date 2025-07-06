@@ -14,7 +14,7 @@
 
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, useNavigate, useParams } from "react-router-dom";
-import React, { useState } from "react";
+
 
 const App = () => {
   const [posts, setPosts] = useState([]);
