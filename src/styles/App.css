@@ -1,1 +1,62 @@
 
+.App {
+  max-width: 600px;
+  margin: 0 auto;
+  font-family: Arial, sans-serif;
+}
+
+nav a {
+  margin-right: 10px;
+  text-decoration: none;
+  color: #007bff;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+.posts-list h2 {
+  margin-top: 20px;
+}
+
+.post {
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 8px;
+}
+
+button, .button {
+  margin: 5px;
+  padding: 6px 12px;
+  background: #007bff;
+  border: none;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover, .button:hover {
+  background: #0056b3;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  cursor: pointer;
+  padding: 5px;
+  border: 1px solid #ccc;
+  margin: 5px 0;
+  border-radius: 4px;
+}
+
+li:hover {
+  background: #f0f0f0;
+}
+
+.notificationsList {
+  margin-top: 20px;
+}
