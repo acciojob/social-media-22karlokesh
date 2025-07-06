@@ -14,171 +14,124 @@
 
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, useNavigate, useParams } from "react-router-dom";
+import React, { useState } from "react";
 
 const App = () => {
   const [posts, setPosts] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [users] = useState(["User1", "User2", "User3"]);
   const [selectedUserPosts, setSelectedUserPosts] = useState([]);
-  
-  return (
-    <div className="App">
-      <h1>GenZ</h1>
-      <Router>
-        <nav>
-          <a href="/">Posts</a> | 
-          <a href="/users">Users</a> | 
-          <a href="/notifications">Notifications</a>
-        </nav>
-
-        <Routes>
-          <Route path="/" element={
-            <PostsList posts={posts} setPosts={setPosts} />
-          } />
-          <Route path="/users" element={
-            <Users users={users} posts={posts} setSelectedUserPosts={setSelectedUserPosts} selectedUserPosts={selectedUserPosts} />
-          } />
-          <Route path="/notifications" element={
-            <Notifications notifications={notifications} setNotifications={setNotifications} />
-          } />
-          <Route path="/create-post" element={
-            <CreatePost posts={posts} setPosts={setPosts} />
-          } />
-          <Route path="/posts/:postId" element={
-            <PostDetails posts={posts} setPosts={setPosts} />
-          } />
-        </Routes>
-      </Router>
-    </div>
-  )
-}
-
-export default App;
-
-// Components
-
-const PostsList = ({ posts, setPosts }) => {
-  return (
-    <div className="posts-list">
-      <h2>Posts</h2>
-      <a href="/create-post"><button>Create New Post</button></a>
-      {posts.map((post, i) => (
-        <div key={i} className="post">
-          <h3>{post.title}</h3>
-          <p>{post.content}</p>
-          <div>
-            {post.reactions.slice(0, 4).map((r, idx) => (
-              <button key={idx} onClick={() => {
-                const updated = [...posts];
-                updated[i].reactions[idx]++;
-                setPosts(updated);
-              }}>{r}</button>
-            ))}
-            <button>0</button>
-          </div>
-          <button className="button" onClick={() => window.location.href=`/posts/${i}`}>View Details</button>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-const CreatePost = ({ posts, setPosts }) => {
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [content, setContent] = useState("");
-  const navigate = useNavigate();
+  const [editingIndex, setEditingIndex] = useState(-1);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [page, setPage] = useState("/");
 
-  const handleSubmit = () => {
+  const addPost = () => {
     const newPost = { title, author, content, reactions: [0,0,0,0] };
     setPosts([newPost, ...posts]);
-    navigate("/");
+    setTitle(""); setAuthor(""); setContent("");
   };
 
-  return (
-    <div>
-      <h2>Create Post</h2>
-      <input id="postTitle" placeholder="Post Title" value={title} onChange={(e)=>setTitle(e.target.value)} />
-      <select id="postAuthor" value={author} onChange={(e)=>setAuthor(e.target.value)}>
-        <option value="">Select Author</option>
-        <option value="User1">User1</option>
-        <option value="User2">User2</option>
-        <option value="User3">User3</option>
-      </select>
-      <textarea id="postContent" placeholder="Post Content" value={content} onChange={(e)=>setContent(e.target.value)}></textarea>
-      <button onClick={handleSubmit}>Submit</button>
-    </div>
-  );
-};
-
-const PostDetails = ({ posts, setPosts }) => {
-  const { postId } = useParams();
-  const [editing, setEditing] = useState(false);
-  const post = posts[postId];
-  const [title, setTitle] = useState(post.title);
-  const [content, setContent] = useState(post.content);
+  const editPost = (index) => {
+    setEditingIndex(index);
+    setEditTitle(posts[index].title);
+    setEditContent(posts[index].content);
+  };
 
   const saveEdit = () => {
     const updated = [...posts];
-    updated[postId].title = title;
-    updated[postId].content = content;
+    updated[editingIndex].title = editTitle;
+    updated[editingIndex].content = editContent;
     setPosts(updated);
-    setEditing(false);
+    setEditingIndex(-1);
   };
 
   return (
-    <div className="post">
-      {editing ? (
+    <div className="App">
+      <h1>GenZ</h1>
+      <nav>
+        <a href="/" onClick={(e)=>{e.preventDefault();setPage("/")}}>Posts</a> | 
+        <a href="/users" onClick={(e)=>{e.preventDefault();setPage("/users")}}>Users</a> | 
+        <a href="/notifications" onClick={(e)=>{e.preventDefault();setPage("/notifications")}}>Notifications</a>
+      </nav>
+
+      {page === "/" && (
         <>
-          <input id="postTitle" value={title} onChange={(e)=>setTitle(e.target.value)} />
-          <textarea id="postContent" value={content} onChange={(e)=>setContent(e.target.value)}></textarea>
-          <button onClick={saveEdit}>Save</button>
+          <div>
+            <input id="postTitle" value={title} onChange={e=>setTitle(e.target.value)} placeholder="Post Title"/>
+            <select id="postAuthor" value={author} onChange={e=>setAuthor(e.target.value)}>
+              <option value="">Select Author</option>
+              {users.map((u,i)=><option key={i} value={u}>{u}</option>)}
+            </select>
+            <textarea id="postContent" value={content} onChange={e=>setContent(e.target.value)} placeholder="Post Content"></textarea>
+            <button onClick={addPost}>Submit</button>
+          </div>
+          <div className="posts-list">
+            <h2>Posts</h2>
+            {posts.map((post, i)=>(
+              <div key={i} className="post">
+                <h3>{post.title}</h3>
+                <p>{post.content}</p>
+                <div>
+                  {post.reactions.slice(0,4).map((r,idx)=>(
+                    <button key={idx} onClick={()=>{
+                      const updated = [...posts];
+                      updated[i].reactions[idx]++;
+                      setPosts(updated);
+                    }}>{r}</button>
+                  ))}
+                  <button>0</button>
+                </div>
+                <button className="button" onClick={()=>editPost(i)}>Edit</button>
+              </div>
+            ))}
+            {editingIndex >= 0 && (
+              <div className="post">
+                <input id="postTitle" value={editTitle} onChange={e=>setEditTitle(e.target.value)} />
+                <textarea id="postContent" value={editContent} onChange={e=>setEditContent(e.target.value)} />
+                <button onClick={saveEdit}>Save</button>
+              </div>
+            )}
+          </div>
         </>
-      ) : (
-        <>
-          <h3>{post.title}</h3>
-          <p>{post.content}</p>
-          <button className="button" onClick={()=>setEditing(true)}>Edit</button>
-        </>
+      )}
+
+      {page === "/users" && (
+        <div>
+          <ul>
+            {users.map((u,i)=>(
+              <li key={i} onClick={()=>{
+                setSelectedUserPosts(posts.filter(p=>p.author===u));
+              }}>{u}</li>
+            ))}
+          </ul>
+          {selectedUserPosts.map((p,i)=>(
+            <div key={i} className="post">
+              <h3>{p.title}</h3>
+              <p>{p.content}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {page === "/notifications" && (
+        <section className="notificationsList">
+          <button className="button" onClick={()=>{
+            setNotifications([
+              "New comment on your post",
+              "User2 liked your post"
+            ]);
+          }}>Refresh Notifications</button>
+          {notifications.map((n,i)=>(
+            <div key={i}>{n}</div>
+          ))}
+        </section>
       )}
     </div>
   );
 };
 
-const Users = ({ users, posts, setSelectedUserPosts, selectedUserPosts }) => {
-  return (
-    <div>
-      <h2>Users</h2>
-      <ul>
-        {users.map((u, i) => (
-          <li key={i} onClick={() => {
-            setSelectedUserPosts(posts.filter(p=>p.author===u));
-          }}>{u}</li>
-        ))}
-      </ul>
-      {selectedUserPosts.map((p, i)=>(
-        <div key={i} className="post">
-          <h3>{p.title}</h3>
-          <p>{p.content}</p>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-const Notifications = ({ notifications, setNotifications }) => {
-  return (
-    <section className="notificationsList">
-      <h2>Notifications</h2>
-      <button className="button" onClick={()=>{
-        setNotifications([
-          "New comment on your post",
-          "User2 liked your post"
-        ]);
-      }}>Refresh Notifications</button>
-      {notifications.map((n,i)=>(
-        <div key={i}>{n}</div>
-      ))}
-    </section>
-  )
-}
+export default App;
